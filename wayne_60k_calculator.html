@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Wayne Trucking 60K Calculator</title>
+    <style>
+        :root {
+            --bg: #f6f7fb;
+            --panel: #ffffff;
+            --ink: #1b2430;
+            --muted: #586575;
+            --brand: #274c77;
+            --brand-2: #3a7bd5;
+            --good: #1f8f5f;
+            --bad: #c64f4f;
+            --line: #e6ebf2;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: var(--bg);
+            color: var(--ink);
+            line-height: 1.5;
+        }
+
+        .wrap {
+            max-width: 980px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 22px;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.03);
+        }
+
+        h1 {
+            margin: 0 0 10px;
+            font-size: 30px;
+        }
+
+        .subtitle {
+            margin: 0 0 22px;
+            color: var(--muted);
+        }
+
+        .eyebrow {
+            display: inline-block;
+            margin-bottom: 8px;
+            padding: 6px 10px;
+            border-radius: 999px;
+            background: #edf4ff;
+            color: var(--brand);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 18px;
+        }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            padding: 12px 14px;
+            font-size: 16px;
+        }
+
+        .result-box {
+            margin-top: 24px;
+            padding: 18px;
+            border-radius: 12px;
+            background: #f8fbff;
+            border: 1px solid #d9e8ff;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--line);
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .result-row strong {
+            font-size: 16px;
+        }
+
+        .status {
+            margin-top: 18px;
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .success {
+            color: var(--good);
+        }
+
+        .danger {
+            color: var(--bad);
+        }
+
+        .small {
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .formula {
+            background: #f8fafc;
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 14px;
+            margin-top: 20px;
+            font-family: Consolas, monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrap">
+        <div class="panel">
+            <div class="eyebrow">Wayne's number check</div>
+            <h1>How much does this need to make?</h1>
+            <p class="subtitle">Plug in your numbers and see what it really takes to hit the monthly cash flow you want.
+            </p>
+
+            <div class="grid">
+                <div class="field">
+                    <label for="trucks">How many trucks are you running?</label>
+                    <input id="trucks" type="number" value="2" step="1" min="0" />
+                </div>
+
+                <div class="field">
+                    <label for="rate">What are you averaging per load?</label>
+                    <input id="rate" type="number" value="1500" step="50" min="0" />
+                </div>
+
+                <div class="field">
+                    <label for="loads">How many loads per truck each week?</label>
+                    <input id="loads" type="number" value="5" step="0.5" min="0" />
+                </div>
+
+                <div class="field">
+                    <label for="expenses">What are your monthly operating costs?</label>
+                    <input id="expenses" type="number" value="4950" step="250" min="0" />
+                </div>
+
+                <div class="field">
+                    <label for="target">What monthly cash target are you chasing?</label>
+                    <input id="target" type="number" value="60000" step="1000" min="0" />
+                </div>
+            </div>
+
+            <div class="result-box">
+                <div class="result-row">
+                    <span>Gross monthly revenue</span>
+                    <strong id="grossRevenue">$0.00</strong>
+                </div>
+                <div class="result-row">
+                    <span>What’s left after the trucks and bills?</span>
+                    <strong id="netRevenue">$0.00</strong>
+                </div>
+                <div class="result-row">
+                    <span>Difference from your target</span>
+                    <strong id="deltaRevenue">$0.00</strong>
+                </div>
+            </div>
+
+            <div id="status" class="status">Plug in your numbers and see where the business stands.</div>
+
+            <div class="formula">
+                Monthly revenue = trucks × (average rate per load × loads per truck per week × 4.33)
+                Cash after expenses = monthly revenue − monthly operating costs
+                Goal check = cash after expenses ≥ your target
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const WEEKS_PER_MONTH = 4.33;
+
+        function money(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+            }).format(value);
+        }
+
+        function calculate() {
+            const trucks = Number(document.getElementById('trucks').value || 0);
+            const rate = Number(document.getElementById('rate').value || 0);
+            const loads = Number(document.getElementById('loads').value || 0);
+            const expenses = Number(document.getElementById('expenses').value || 0);
+            const target = Number(document.getElementById('target').value || 0);
+
+            const gross = trucks * rate * loads * WEEKS_PER_MONTH;
+            const net = gross - expenses;
+            const delta = net - target;
+
+            document.getElementById('grossRevenue').textContent = money(gross);
+            document.getElementById('netRevenue').textContent = money(net);
+            document.getElementById('deltaRevenue').textContent = money(delta);
+
+            const status = document.getElementById('status');
+            if (net >= target) {
+                status.textContent = `This hits the number — you're ahead by ${money(Math.abs(delta))}.`;
+                status.className = 'status success';
+            } else {
+                status.textContent = `Not there yet — you're short by ${money(Math.abs(delta))}.`;
+                status.className = 'status danger';
+            }
+        }
+
+        ['trucks', 'rate', 'loads', 'expenses', 'target'].forEach((id) => {
+            document.getElementById(id).addEventListener('input', calculate);
+        });
+
+        calculate();
+    </script>
+</body>
+
+</html>
